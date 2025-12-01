@@ -9,9 +9,10 @@ Optimizations Applied:
 1. Conv-BN-ReLU fusion (automatic in ONNX)
 2. Constant folding
 3. Dead code elimination
-4. FP16 precision (mixed precision inference)
-5. Winograd convolution optimization (for 3x3 kernels)
-6. Custom kernel support for SSH modules
+4. Winograd convolution optimization (for 3x3 kernels)
+5. Custom kernel support for SSH modules
+
+Note: FP16/FP32 precision options and quantization are not included.
 """
 
 import os
@@ -124,7 +125,6 @@ def optimize_onnx_model(onnx_model):
 
 
 def create_tensorrt_config(
-    use_fp16: bool = True,
     use_winograd: bool = True,
     max_workspace_size_gb: float = 4.0,
 ) -> Dict[str, Any]:
@@ -132,7 +132,6 @@ def create_tensorrt_config(
     Create TensorRT optimization configuration.
 
     Args:
-        use_fp16: Enable FP16 mixed precision (30-50% speedup on compatible GPUs)
         use_winograd: Enable Winograd convolution (20-40% speedup for 3x3 convs)
         max_workspace_size_gb: Maximum GPU memory for optimization (in GB)
 
@@ -140,7 +139,7 @@ def create_tensorrt_config(
         Configuration dictionary
     """
     config = {
-        "precision": "fp16" if use_fp16 else "fp32",
+        "precision": "fp32",
         "workspace_size": int(max_workspace_size_gb * (1024**3)),
         "tactics": {
             "winograd": use_winograd,
@@ -155,7 +154,6 @@ def create_tensorrt_config(
 def export_to_tensorrt(
     onnx_path: str,
     output_path: str,
-    use_fp16: bool = True,
     use_winograd: bool = True,
     verbose: bool = True,
 ) -> str:
@@ -165,7 +163,6 @@ def export_to_tensorrt(
     Args:
         onnx_path: Path to ONNX model
         output_path: Path to save TensorRT engine
-        use_fp16: Enable FP16 precision (NOT quantization)
         use_winograd: Enable Winograd optimization for 3x3 convs
         verbose: Print verbose output
 
@@ -208,24 +205,14 @@ def export_to_tensorrt(
     # Set workspace size (GPU memory for optimization)
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 4 * (1024**3))  # 4GB
 
-    # Enable FP16 precision
-    if use_fp16:
-        print("\n2. Enabling FP16 mixed precision...")
-        if builder.platform_has_fast_fp16:
-            config.set_flag(trt.BuilderFlag.FP16)
-            config.set_flag(trt.BuilderFlag.STRICT_TYPES)
-            print("   ✓ FP16 enabled (30-50% speedup expected)")
-        else:
-            print("   ⚠ FP16 not supported on this GPU, using FP32")
-
     # Winograd is automatically used by TensorRT for 3x3 convolutions
     # when it's beneficial
     if use_winograd:
-        print("\n3. Winograd optimization enabled for 3x3 convolutions")
+        print("\n2. Winograd optimization enabled for 3x3 convolutions")
         print("   ✓ 20-40% speedup expected for convolution layers")
 
     # Build engine
-    print("\n4. Building TensorRT engine (this may take several minutes)...")
+    print("\n3. Building TensorRT engine (this may take several minutes)...")
     serialized_engine = builder.build_serialized_network(network, config)
 
     if serialized_engine is None:
@@ -233,7 +220,7 @@ def export_to_tensorrt(
         return None
 
     # Save engine
-    print(f"\n5. Saving TensorRT engine to {output_path}...")
+    print(f"\n4. Saving TensorRT engine to {output_path}...")
     with open(output_path, "wb") as f:
         f.write(serialized_engine)
 
@@ -320,6 +307,6 @@ if __name__ == "__main__":
     print("This module provides utilities for:")
     print("  1. Exporting RetinaFace to ONNX format")
     print("  2. Optimizing ONNX models (Conv-BN fusion, etc.)")
-    print("  3. Converting to TensorRT with FP16 and Winograd")
+    print("  3. Converting to TensorRT with Winograd optimization")
     print("  4. Benchmarking inference performance")
     print("=" * 60)

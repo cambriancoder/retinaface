@@ -131,22 +131,7 @@ from retinaface.model.onnx_export import export_to_onnx
 export_to_onnx(model, "retinaface_optimized.onnx", optimize=True)
 ```
 
-### 3. **FP16 Mixed Precision** ⭐ (NOT Quantization)
-
-Using FP16 instead of FP32 on compatible GPUs provides significant speedup **without quantization**.
-
-**What it is**:
-- Mixed precision uses 16-bit floating point instead of 32-bit
-- Different from INT8 quantization (not quantization!)
-- No accuracy loss with proper implementation
-
-**Estimated benefit**: 30-50% faster GPU inference
-**Complexity**: Low (enabled via TensorRT flag)
-**Risk**: Very low (negligible accuracy impact)
-
-**Hardware requirements**: NVIDIA GPU with Tensor Cores (RTX 20xx+, V100+)
-
-### 4. **Winograd Convolution Algorithm** ⭐
+### 3. **Winograd Convolution Algorithm** ⭐
 
 Winograd algorithm optimizes 3x3 convolutions (abundant in RetinaFace).
 
@@ -161,7 +146,7 @@ Winograd algorithm optimizes 3x3 convolutions (abundant in RetinaFace).
 
 **Applicable to**: ~60+ 3x3 convolution layers in RetinaFace
 
-### 5. **TensorRT Conversion** ⭐ (Recommended)
+### 4. **TensorRT Conversion** ⭐ (Recommended)
 
 TensorRT combines multiple optimizations into a single optimized engine.
 
@@ -169,12 +154,11 @@ TensorRT combines multiple optimizations into a single optimized engine.
 
 **Combines**:
 - Conv-BN-ReLU fusion
-- FP16 mixed precision
 - Winograd convolutions
 - Kernel auto-tuning
 - Memory optimization
 
-**Estimated benefit**: **2-3x faster overall** (combined effect)
+**Estimated benefit**: **1.5-2x faster overall** (combined effect)
 **Complexity**: Medium (utilities provided)
 **Risk**: Low
 
@@ -184,13 +168,12 @@ from retinaface.model.onnx_export import export_to_tensorrt
 
 export_to_tensorrt(
     onnx_path="retinaface.onnx",
-    output_path="retinaface_fp16.trt",
-    use_fp16=True,
+    output_path="retinaface_optimized.trt",
     use_winograd=True
 )
 ```
 
-### 6. **Custom CUDA Kernels** (Advanced)
+### 5. **Custom CUDA Kernels** (Advanced)
 
 For maximum performance, custom CUDA kernels can fuse entire module sequences.
 
@@ -217,18 +200,17 @@ python examples/optimize_model.py
 # This will:
 # - Apply Conv-BN fusion
 # - Export to ONNX with optimizations
-# - Convert to TensorRT with FP16 + Winograd
+# - Convert to TensorRT with Winograd optimization
 # - Benchmark performance
 ```
 
 **Expected results**:
 - Original model: ~100ms inference (baseline)
-- + Conv-BN fusion: ~85ms (15% faster)
-- + ONNX optimizations: ~80ms (20% faster total)
-- + FP16 precision: ~50ms (2x faster total)
-- + Winograd: **~35ms (2.8x faster total!)** 🚀
+- + Conv-BN fusion: ~85ms (1.18x faster)
+- + ONNX optimizations: ~80ms (1.25x faster)
+- + Winograd: **~55ms (1.8x faster total!)** 🚀
 
-### 7. **TensorFlow Lite Conversion** (Mobile/Edge)
+### 6. **TensorFlow Lite Conversion** (Mobile/Edge)
 
 Converting to TFLite format for mobile/edge deployment.
 

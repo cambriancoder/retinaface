@@ -6,10 +6,10 @@ This script demonstrates the complete optimization pipeline:
 1. Load the original model
 2. Apply Conv-BN fusion
 3. Export to ONNX with optimizations
-4. Convert to TensorRT with FP16 and Winograd
+4. Convert to TensorRT with Winograd optimization
 5. Benchmark performance improvements
 
-Expected speedup: 2-3x faster inference on GPU
+Expected speedup: 1.5-2x faster inference
 """
 
 import os
@@ -95,13 +95,12 @@ def main():
     print("STEP 5: Converting to TensorRT (Optional)")
     print("=" * 80)
 
-    trt_path = os.path.join(output_dir, "retinaface_fp16.trt")
+    trt_path = os.path.join(output_dir, "retinaface_optimized.trt")
 
     try:
         export_to_tensorrt(
             onnx_path=onnx_path,
             output_path=trt_path,
-            use_fp16=True,
             use_winograd=True,
             verbose=False,
         )
@@ -124,7 +123,7 @@ def main():
         print(f"\n✓ Optimized model saved to: {output_dir}/")
         print(f"  - ONNX model: retinaface_optimized.onnx")
         if os.path.exists(trt_path):
-            print(f"  - TensorRT engine: retinaface_fp16.trt")
+            print(f"  - TensorRT engine: retinaface_optimized.trt")
 
         print(f"\nPerformance:")
         print(f"  - Inference time: {stats['mean_ms']:.2f} ms")
@@ -132,9 +131,9 @@ def main():
 
         print("\nExpected improvements over original:")
         print("  - Conv-BN fusion: ~10-15% faster")
-        print("  - FP16 precision: ~30-50% faster (GPU)")
+        print("  - ONNX optimizations: ~5-10% faster")
         print("  - Winograd (3x3): ~20-40% faster")
-        print("  - Combined: 2-3x faster overall! 🚀")
+        print("  - Combined: 1.5-2x faster overall! 🚀")
 
     except ImportError as e:
         print(f"\n⚠ Skipping benchmark: {e}")

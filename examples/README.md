@@ -56,24 +56,21 @@ export_to_onnx(
 )
 ```
 
-### 3. **TensorRT with FP16** (30-50% speedup)
+### 3. **TensorRT with Winograd** (20-40% speedup)
 
-Convert to TensorRT engine with FP16 mixed precision (NOT quantization).
+Convert to TensorRT engine with Winograd optimization for 3x3 convolutions.
 
 ```python
 from retinaface.model.onnx_export import export_to_tensorrt
 
 export_to_tensorrt(
     onnx_path="retinaface.onnx",
-    output_path="retinaface_fp16.trt",
-    use_fp16=True,
+    output_path="retinaface_optimized.trt",
     use_winograd=True
 )
 ```
 
-### 4. **Winograd Convolutions** (20-40% speedup)
-
-Automatically enabled in TensorRT for 3x3 convolutions.
+Winograd algorithm is automatically enabled in TensorRT for 3x3 convolutions.
 
 ## Performance Expectations
 
@@ -82,18 +79,16 @@ Automatically enabled in TensorRT for 3x3 convolutions.
 | Original Model | ~100ms | 1.0x (baseline) |
 | + Conv-BN Fusion | ~85ms | 1.18x |
 | + ONNX Optimizations | ~80ms | 1.25x |
-| + FP16 Precision | ~50ms | 2.0x |
-| + Winograd | **~35ms** | **2.8x** 🚀 |
+| + Winograd | **~55ms** | **1.8x** 🚀 |
 
-**Total expected speedup: 2-3x faster inference!**
+**Total expected speedup: 1.5-2x faster inference!**
 
 ## Hardware Requirements
 
-### For FP16 Mixed Precision:
-- NVIDIA GPU with Tensor Cores
-- RTX 20xx series or newer
-- Tesla V100, A100
-- GTX 16xx series (limited support)
+### For TensorRT with Winograd:
+- NVIDIA GPU recommended for best performance
+- Works on any CUDA-compatible GPU
+- CPU inference also supported (slower)
 
 ### For Basic Optimizations (no GPU required):
 - Conv-BN fusion: CPU-friendly
@@ -131,9 +126,6 @@ pip install tf2onnx onnx onnxoptimizer
 ### "TensorRT not found"
 TensorRT is optional but provides best performance. Download from:
 https://developer.nvidia.com/tensorrt
-
-### "FP16 not supported on this GPU"
-FP16 requires modern NVIDIA GPUs with Tensor Cores. The script will automatically fall back to FP32.
 
 ## Additional Resources
 
