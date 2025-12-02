@@ -18,7 +18,8 @@ def get_image(img_uri: Union[str, np.ndarray]) -> np.ndarray:
     """
     # if it is pre-loaded numpy array
     if isinstance(img_uri, np.ndarray):  # Use given NumPy array
-        img = img_uri.copy()
+        # Memory optimization: Only copy if necessary, we won't modify original
+        img = img_uri
 
     # if it is base64 encoded string
     elif isinstance(img_uri, str) and img_uri.startswith("data:image/"):
